@@ -1,8 +1,38 @@
+const fs  = require('fs');
 class ProductManager{
     #products
+    #path
     static id_products = 0;
     constructor(){
-        this.#products = []        
+        this.#products = this.#lecturaProductos();
+        this.#path = "./productos.json"
+    }
+
+    #asignarId(){
+        let ir = 1;
+        if (this.#products.length != 0){
+            id = this.#products[this.#products.length - 1].id + 1;
+        }
+        return id;      
+    }
+
+    #lecturaProductos(){
+        try {
+            if(fs.existsSync(this.path))
+                return JSON.parse(fs.readFileSync(this.#path , {encoding: "utf-8"}));
+            
+            return []
+        } catch (error) {
+            console.log("hubo un error en la lectura del archivo");
+        }
+    }
+    
+    #guardarArchivo(){
+        try {
+            fs.writeFileSync(this.#path, JSON.stringify(this.#products))
+        } catch (error) {
+            console.log("hubo un error en el guardado del archivo");
+        }
     }
 
     addProduct(title, description, price, thumbnail, code, stock){
@@ -26,6 +56,8 @@ class ProductManager{
                 stock:stock
             };
             this.#products.push(Producto_nuevo);
+            this.#guardarArchivo();
+
             return "producto nuevo agreado"
     }
 
@@ -40,6 +72,29 @@ class ProductManager{
         else{
             return "not found"
         }
+    }
+    updateProduct(id , objetoUpdate){
+        let msg = `el producto con el id ${id} no existe`
+
+        const index = this.#products.findIndex(p=> p.id === id)
+
+        if(index !== -1){
+            const {id, ...rest} = objetoUpdate
+            this.#products[index] = {...this.#products[index] , ...rest};
+            this.#guardarArchivo();
+            msg = "el producto fue actualizado"
+        }
+    }
+    deleteProduct(id){
+        let msg = `el producto con id ${id} no existe`
+
+        const index = this.#products.findIndex(p => p.id === id);
+        if(index !== -1){
+            this.#products = this.#products.filter(p=> p.id !== id);
+            this.#guardarArchivo();
+            msg = "el producto fue eliminado"
+        }
+        return msg;
     }
 }
 
